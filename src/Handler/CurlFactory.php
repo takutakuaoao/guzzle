@@ -53,6 +53,8 @@ class CurlFactory implements CurlFactoryInterface
             if (!self::supportsHttp2()) {
                 throw new ConnectException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
             }
+        } elseif ('' === $protocolVersion) {
+            throw new ConnectException('Protocol version is not set for the cURL handler.', $request);
         } elseif ('1.0' !== $protocolVersion && '1.1' !== $protocolVersion) {
             throw new ConnectException(sprintf('HTTP/%s is not supported by the cURL handler.', $protocolVersion), $request);
         }

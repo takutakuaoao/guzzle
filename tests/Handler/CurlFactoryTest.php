@@ -493,6 +493,21 @@ class CurlFactoryTest extends TestCase
         self::assertEquals(\CURL_HTTP_VERSION_1_0, $_SERVER['_curl'][\CURLOPT_HTTP_VERSION]);
     }
 
+    /**
+     * https://github.com/guzzle/guzzle/issues/3250
+     */
+    public function testFailsWhenEmptyProtocolVersion()
+    {
+        $this->expectException(ConnectException::class);
+        $this->expectExceptionMessage('Protocol version is not set for the cURL handler.');
+
+        $emptyProtocolVersion = '';
+        $request = new Psr7\Request('GET', Server::$url, [], null, $emptyProtocolVersion);
+        $factory = new CurlFactory(3);
+
+        $factory->create($request, []);
+    }
+
     public function testSavesToStream()
     {
         $stream = \fopen('php://memory', 'r+');
