@@ -47,14 +47,14 @@ class CurlFactory implements CurlFactoryInterface
 
     public function create(RequestInterface $request, array $options): EasyHandle
     {
+        $request = $request->getProtocolVersion() !== '' ? $request : self::enforceProtocol($request);
+
         $protocolVersion = $request->getProtocolVersion();
 
         if ('2' === $protocolVersion || '2.0' === $protocolVersion) {
             if (!self::supportsHttp2()) {
                 throw new ConnectException('HTTP/2 is supported by the cURL handler, however libcurl is built without HTTP/2 support.', $request);
             }
-        } elseif ('' === $protocolVersion) {
-            throw new ConnectException('Protocol version is not set for the cURL handler.', $request);
         } elseif ('1.0' !== $protocolVersion && '1.1' !== $protocolVersion) {
             throw new ConnectException(sprintf('HTTP/%s is not supported by the cURL handler.', $protocolVersion), $request);
         }
@@ -83,6 +83,17 @@ class CurlFactory implements CurlFactoryInterface
         curl_setopt_array($easy->handle, $conf);
 
         return $easy;
+    }
+
+    private static function enforceProtocol(RequestInterface $request, string $version = '1.0'): RequestInterface
+    {
+        $enforcedRequest = $request->withProtocolVersion($version);
+
+        if (!($enforcedRequest instanceof RequestInterface)) {
+            throw new RequestException('The withProtocolVersion method of request must be return RequestInterface, if the protocol version is empty.', $request);
+        }
+
+        return $enforcedRequest;
     }
 
     private static function supportsHttp2(): bool
